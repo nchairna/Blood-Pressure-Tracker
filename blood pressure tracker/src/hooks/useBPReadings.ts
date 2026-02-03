@@ -17,19 +17,28 @@ import type { BPReading, BPReadingFormData, DateRangeOption } from '@/types'
 import { getDateRange } from '@/lib/bp-utils'
 
 export function useBPReadings(dateRangeOption: DateRangeOption = 'all') {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [readings, setReadings] = useState<BPReading[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    // Wait for auth to finish initializing before attempting to fetch data
+    // This prevents race conditions where we try to query Firestore
+    // before knowing if the user is authenticated
+    if (authLoading) {
+      return
+    }
+
     if (!user) {
       setReadings([])
       setLoading(false)
+      setError(null)
       return
     }
 
     setLoading(true)
+    setError(null)
 
     // For 'all', use simpler query without date range (faster, no complex index needed)
     // For specific ranges, use date filters
@@ -54,23 +63,42 @@ export function useBPReadings(dateRangeOption: DateRangeOption = 'all') {
     const unsubscribe = onSnapshot(
       readingsQuery,
       (snapshot) => {
-        const readingsData: BPReading[] = snapshot.docs.map((docSnap) => ({
-          id: docSnap.id,
-          ...docSnap.data(),
-        })) as BPReading[]
-        setReadings(readingsData)
-        setLoading(false)
-        setError(null)
+        try {
+          const readingsData: BPReading[] = snapshot.docs.map((docSnap) => ({
+            id: docSnap.id,
+            ...docSnap.data(),
+          })) as BPReading[]
+          setReadings(readingsData)
+          setLoading(false)
+          setError(null)
+        } catch (err) {
+          console.error('Error processing readings data:', err)
+          setError('Failed to process readings data')
+          setLoading(false)
+        }
       },
       (err) => {
         console.error('Error fetching readings:', err)
-        setError('Failed to load readings')
+
+        // Provide more specific error messages
+        let errorMessage = 'Failed to load readings'
+        if (err.code === 'permission-denied') {
+          errorMessage = 'Permission denied. Please log in again.'
+        } else if (err.code === 'unavailable') {
+          errorMessage = 'Network error. Please check your connection.'
+        } else if (err.code === 'unauthenticated') {
+          errorMessage = 'Authentication required. Please log in again.'
+        }
+
+        setError(errorMessage)
         setLoading(false)
       }
     )
 
-    return unsubscribe
-  }, [user, dateRangeOption])
+    return () => {
+      unsubscribe()
+    }
+  }, [user, authLoading, dateRangeOption])
 
   const addReading = useCallback(
     async (data: BPReadingFormData) => {
@@ -110,11 +138,16 @@ export function useBPReadings(dateRangeOption: DateRangeOption = 'all') {
 }
 
 export function useTodayReadings() {
-  const { user } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [readings, setReadings] = useState<BPReading[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Wait for auth to initialize
+    if (authLoading) {
+      return
+    }
+
     if (!user) {
       setReadings([])
       setLoading(false)
@@ -137,21 +170,30 @@ export function useTodayReadings() {
     const unsubscribe = onSnapshot(
       readingsQuery,
       (snapshot) => {
-        const readingsData: BPReading[] = snapshot.docs.map((docSnap) => ({
-          id: docSnap.id,
-          ...docSnap.data(),
-        })) as BPReading[]
-        setReadings(readingsData)
-        setLoading(false)
+        try {
+          const readingsData: BPReading[] = snapshot.docs.map((docSnap) => ({
+            id: docSnap.id,
+            ...docSnap.data(),
+          })) as BPReading[]
+          setReadings(readingsData)
+          setLoading(false)
+        } catch (err) {
+          console.error('Error processing today readings data:', err)
+          setReadings([])
+          setLoading(false)
+        }
       },
       (err) => {
         console.error('Error fetching today readings:', err)
+        setReadings([])
         setLoading(false)
       }
     )
 
-    return unsubscribe
-  }, [user])
+    return () => {
+      unsubscribe()
+    }
+  }, [user, authLoading])
 
   return { readings, loading }
 }

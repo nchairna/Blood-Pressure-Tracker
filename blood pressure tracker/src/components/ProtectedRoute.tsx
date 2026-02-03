@@ -23,6 +23,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }, [loading])
 
   // Show loading state with optimized UX
+  // Only show if auth is still initializing
   if (loading) {
     return showLoading ? (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#f5f5f7]">
@@ -37,9 +38,12 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     ) : null
   }
 
+  // Auth has finished initializing
+  // If no user found, redirect to login
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
+  // User is authenticated, render protected content
   return <>{children}</>
 }
