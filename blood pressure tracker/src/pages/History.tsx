@@ -111,6 +111,32 @@ export default function History() {
     )
   }
 
+  // Empty state for new users with no readings at all
+  if (!loading && readings.length === 0) {
+    return (
+      <div className="space-y-5">
+        <div>
+          <h1 className="text-[28px] font-bold text-[#1d1d1f]">Riwayat</h1>
+          <p className="text-[#86868b] mt-1">0 catatan</p>
+        </div>
+
+        <div className="bg-white rounded-2xl p-12 text-center">
+          <BarChart3 className="w-16 h-16 text-[#86868b] mx-auto mb-4 opacity-50" />
+          <h2 className="text-[20px] font-semibold text-[#1d1d1f] mb-2">Belum Ada Riwayat</h2>
+          <p className="text-[15px] text-[#86868b] mb-6">
+            Mulai catat tekanan darah Anda untuk melihat riwayat di sini
+          </p>
+          <a
+            href="/entry"
+            className="inline-block bg-[#007aff] text-white font-semibold text-[15px] px-6 py-3 rounded-xl hover:bg-opacity-90 transition-all"
+          >
+            Tambah Catatan Pertama
+          </a>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-5">
       {/* Header */}

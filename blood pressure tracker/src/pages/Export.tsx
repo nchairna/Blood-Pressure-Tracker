@@ -115,6 +115,34 @@ export default function Export() {
     )
   }
 
+  // Empty state for new users with no readings at all
+  if (!loading && readings.length === 0) {
+    return (
+      <div className="space-y-5">
+        <div>
+          <h1 className="text-[28px] font-bold text-[#1d1d1f]">Ekspor</h1>
+          <p className="text-[#86868b] mt-1">Unduh data tekanan darah Anda</p>
+        </div>
+
+        <div className="bg-white rounded-2xl p-12 text-center">
+          <svg className="w-16 h-16 text-[#86868b] mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+          </svg>
+          <h2 className="text-[20px] font-semibold text-[#1d1d1f] mb-2">Belum Ada Data untuk Diekspor</h2>
+          <p className="text-[15px] text-[#86868b] mb-6">
+            Mulai catat tekanan darah Anda untuk mengekspor laporan
+          </p>
+          <a
+            href="/entry"
+            className="inline-block bg-[#007aff] text-white font-semibold text-[15px] px-6 py-3 rounded-xl hover:bg-opacity-90 transition-all"
+          >
+            Tambah Catatan Pertama
+          </a>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-5">
       {/* Header */}

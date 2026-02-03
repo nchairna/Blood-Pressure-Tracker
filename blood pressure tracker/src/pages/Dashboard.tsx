@@ -99,6 +99,90 @@ export default function Dashboard() {
     )
   }
 
+  // Empty state for new users
+  if (!loading && readings.length === 0) {
+    return (
+      <div className="space-y-5">
+        {/* Greeting */}
+        <div>
+          <h1 className="text-[28px] font-bold text-[#1d1d1f]">Halo, {displayName}</h1>
+          <p className="text-[#86868b] mt-0.5">Selamat datang di pelacak tekanan darah Anda</p>
+        </div>
+
+        {/* Welcome Card */}
+        <div className="bg-gradient-to-r from-[#007aff] to-[#5856d6] rounded-2xl p-8 text-white text-center">
+          <div className="mb-4">
+            <svg className="w-20 h-20 mx-auto mb-4 opacity-90" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+            </svg>
+          </div>
+          <h2 className="text-[24px] font-bold mb-2">Mulai Pencatatan Anda</h2>
+          <p className="text-[15px] opacity-90 mb-6">
+            Catat tekanan darah Anda secara teratur untuk memantau kesehatan jantung Anda
+          </p>
+          <Link
+            to="/entry"
+            className="inline-block bg-white text-[#007aff] font-semibold text-[17px] px-8 py-3 rounded-xl hover:bg-opacity-90 transition-all"
+          >
+            Tambah Catatan Pertama
+          </Link>
+        </div>
+
+        {/* Info Cards */}
+        <div className="bg-white rounded-2xl p-5">
+          <h3 className="text-[15px] font-semibold text-[#1d1d1f] mb-3">Mengapa mencatat tekanan darah?</h3>
+          <div className="space-y-3">
+            <div className="flex gap-3">
+              <Target className="w-5 h-5 text-[#007aff] mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-[14px] font-medium text-[#1d1d1f]">Pantau Kesehatan</p>
+                <p className="text-[13px] text-[#86868b]">Lihat tren dan pola tekanan darah Anda</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <Flame className="w-5 h-5 text-[#ff9500] mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-[14px] font-medium text-[#1d1d1f]">Bangun Kebiasaan</p>
+                <p className="text-[13px] text-[#86868b]">Catat 3x sehari untuk membangun streak</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <Zap className="w-5 h-5 text-[#34c759] mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-[14px] font-medium text-[#1d1d1f]">Bagikan dengan Dokter</p>
+                <p className="text-[13px] text-[#86868b]">Ekspor laporan untuk konsultasi medis</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* BP Categories Guide */}
+        <div className="bg-white rounded-2xl p-4">
+          <h2 className="text-[13px] font-semibold text-[#86868b] uppercase tracking-wide mb-3">Panduan Tekanan Darah</h2>
+          <div className="space-y-2.5">
+            {[
+              { color: '#34c759', label: 'Normal', sys: '<120', dia: '<80' },
+              { color: '#ff9500', label: 'Meningkat', sys: '120-129', dia: '<80' },
+              { color: '#ff3b30', label: 'Tinggi Tahap 1', sys: '130-139', dia: '80-89' },
+              { color: '#af52de', label: 'Tinggi Tahap 2', sys: '≥140', dia: '≥90' },
+            ].map((item) => (
+              <div key={item.label} className="flex items-center">
+                <div
+                  className="w-3 h-3 rounded-full mr-3"
+                  style={{ backgroundColor: item.color }}
+                />
+                <span className="text-[14px] font-medium text-[#1d1d1f] flex-1">{item.label}</span>
+                <span className="text-[13px] text-[#86868b] tabular-nums">{item.sys}</span>
+                <span className="text-[13px] text-[#86868b] mx-1">/</span>
+                <span className="text-[13px] text-[#86868b] tabular-nums">{item.dia}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const latestStatus = latestReading ? classifyBP(latestReading.systolic, latestReading.diastolic) : null
   const avg7dStatus = stats7d.avgSystolic > 0 ? classifyBP(stats7d.avgSystolic, stats7d.avgDiastolic) : null
 
