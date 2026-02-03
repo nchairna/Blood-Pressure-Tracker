@@ -192,9 +192,8 @@ export function BPDataProvider({ children }: BPDataProviderProps) {
       setReadings((prev) => [optimisticReading, ...prev])
 
       try {
-        // Build reading data - omit notes field entirely if empty
-        // Firestore doesn't accept undefined values
-        const readingData: Record<string, unknown> = {
+        // Build reading data for Firestore
+        const readingData = {
           userId: user.uid,
           systolic: data.systolic,
           diastolic: data.diastolic,
@@ -202,17 +201,16 @@ export function BPDataProvider({ children }: BPDataProviderProps) {
           timeOfDay: data.timeOfDay,
           timestamp: Timestamp.fromDate(data.date),
           createdAt: serverTimestamp(),
+          ...(data.notes ? { notes: data.notes } : {}),
         }
 
-        // Only add notes if provided
-        if (data.notes) {
-          readingData.notes = data.notes
-        }
-
-        await addDoc(collection(db, 'readings'), readingData)
+        console.log('Saving to Firestore:', readingData)
+        const docRef = await addDoc(collection(db, 'readings'), readingData)
+        console.log('Saved successfully with ID:', docRef.id)
         // Firestore listener will update with real data
       } catch (err) {
         // Rollback on error
+        console.error('Firestore save failed:', err)
         setReadings((prev) => prev.filter((r) => r.id !== tempId))
         throw err
       }

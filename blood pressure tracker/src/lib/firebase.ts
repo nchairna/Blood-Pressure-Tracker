@@ -1,11 +1,6 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth, browserLocalPersistence, setPersistence } from 'firebase/auth'
-import {
-  initializeFirestore,
-  persistentLocalCache,
-  persistentMultipleTabManager,
-  CACHE_SIZE_UNLIMITED
-} from 'firebase/firestore'
+import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -34,21 +29,28 @@ if (missingKeys.length > 0) {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig)
 
-// Initialize Auth
+// Initialize services
 export const auth = getAuth(app)
-
-// Initialize Firestore with the newer, faster persistence API
-// This replaces the deprecated enableIndexedDbPersistence
-export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({
-    tabManager: persistentMultipleTabManager(),
-    cacheSizeBytes: CACHE_SIZE_UNLIMITED
-  })
-})
+export const db = getFirestore(app)
 
 // Configure auth persistence
 setPersistence(auth, browserLocalPersistence).catch((error) => {
   console.error('Failed to set auth persistence:', error)
 })
+
+// Enable Firestore offline persistence (optional - app works without it)
+if (typeof window !== 'undefined') {
+  enableIndexedDbPersistence(db).catch((err) => {
+    if (err.code === 'failed-precondition') {
+      // Multiple tabs open, persistence can only be enabled in one tab at a time
+      console.warn('Firestore persistence unavailable: multiple tabs open')
+    } else if (err.code === 'unimplemented') {
+      // Browser doesn't support persistence
+      console.warn('Firestore persistence unavailable: browser not supported')
+    } else {
+      console.error('Firestore persistence error:', err)
+    }
+  })
+}
 
 export default app
