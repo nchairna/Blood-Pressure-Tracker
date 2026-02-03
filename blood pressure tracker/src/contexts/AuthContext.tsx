@@ -52,16 +52,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const register = async (email: string, password: string, displayName: string) => {
     const { user } = await createUserWithEmailAndPassword(auth, email, password)
 
-    // Update profile with display name
-    await updateProfile(user, { displayName })
-
-    // Create user document in Firestore
-    await setDoc(doc(db, 'users', user.uid), {
-      uid: user.uid,
-      email: user.email,
-      displayName,
-      createdAt: serverTimestamp(),
-    })
+    // Run profile update and Firestore write in parallel for faster registration
+    await Promise.all([
+      updateProfile(user, { displayName }),
+      setDoc(doc(db, 'users', user.uid), {
+        uid: user.uid,
+        email: user.email,
+        displayName,
+        createdAt: serverTimestamp(),
+      })
+    ])
   }
 
   const logout = async () => {
