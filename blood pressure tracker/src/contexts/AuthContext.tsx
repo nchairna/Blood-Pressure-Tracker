@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react'
 import {
   type User,
   onAuthStateChanged,
@@ -16,6 +16,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>
   register: (email: string, password: string, displayName: string) => Promise<void>
   logout: () => Promise<void>
+  waitForAuth: () => Promise<User | null>
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
@@ -35,15 +36,31 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [authReady, setAuthReady] = useState(false)
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user)
       setLoading(false)
+      setAuthReady(true)
     })
 
     return unsubscribe
   }, [])
+
+  // Helper function to wait for auth to be ready after login/register
+  const waitForAuth = useCallback((): Promise<User | null> => {
+    if (authReady && !loading) {
+      return Promise.resolve(user)
+    }
+
+    return new Promise((resolve) => {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        unsubscribe()
+        resolve(user)
+      })
+    })
+  }, [authReady, loading, user])
 
   const login = async (email: string, password: string) => {
     await signInWithEmailAndPassword(auth, email, password)
@@ -74,6 +91,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     login,
     register,
     logout,
+    waitForAuth,
   }
 
   return (

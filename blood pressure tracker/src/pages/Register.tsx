@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -9,8 +9,15 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const { register } = useAuth()
+  const { register, waitForAuth, user, loading: authLoading } = useAuth()
   const navigate = useNavigate()
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate('/dashboard', { replace: true })
+    }
+  }, [user, authLoading, navigate])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -29,7 +36,13 @@ export default function Register() {
     setLoading(true)
 
     try {
+      // Register user
       await register(email, password, displayName)
+
+      // Wait for Firebase auth state to update before navigating
+      await waitForAuth()
+
+      // Now safe to navigate - auth state is confirmed
       navigate('/dashboard')
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : ''
@@ -38,9 +51,9 @@ export default function Register() {
       } else {
         setError('Tidak dapat membuat akun. Silakan coba lagi.')
       }
-    } finally {
       setLoading(false)
     }
+    // Don't set loading to false on success - let navigation happen
   }
 
   return (

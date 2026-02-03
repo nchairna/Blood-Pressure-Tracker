@@ -1,19 +1,35 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { Layout } from '@/components/layout/Layout'
 import Login from '@/pages/Login'
 import Register from '@/pages/Register'
-import Dashboard from '@/pages/Dashboard'
-import Entry from '@/pages/Entry'
-import History from '@/pages/History'
-import Export from '@/pages/Export'
+
+// Lazy load heavy pages to reduce initial bundle size
+const Dashboard = lazy(() => import('@/pages/Dashboard'))
+const Entry = lazy(() => import('@/pages/Entry'))
+const History = lazy(() => import('@/pages/History'))
+const Export = lazy(() => import('@/pages/Export'))
 
 // Check if Firebase is configured
 const isFirebaseConfigured = Boolean(
   import.meta.env.VITE_FIREBASE_API_KEY &&
   import.meta.env.VITE_FIREBASE_PROJECT_ID
 )
+
+function PageLoader() {
+  return (
+    <div className="space-y-5 animate-pulse p-5">
+      <div className="h-8 bg-gray-200 rounded-lg w-48"></div>
+      <div className="bg-white rounded-2xl p-5 h-32"></div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-white rounded-2xl p-4 h-24"></div>
+        <div className="bg-white rounded-2xl p-4 h-24"></div>
+      </div>
+    </div>
+  )
+}
 
 function FirebaseNotConfigured() {
   return (
@@ -68,10 +84,38 @@ function App() {
               </ProtectedRoute>
             }
           >
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/entry" element={<Entry />} />
-            <Route path="/history" element={<History />} />
-            <Route path="/export" element={<Export />} />
+            <Route
+              path="/dashboard"
+              element={
+                <Suspense fallback={<PageLoader />}>
+                  <Dashboard />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/entry"
+              element={
+                <Suspense fallback={<PageLoader />}>
+                  <Entry />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/history"
+              element={
+                <Suspense fallback={<PageLoader />}>
+                  <History />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/export"
+              element={
+                <Suspense fallback={<PageLoader />}>
+                  <Export />
+                </Suspense>
+              }
+            />
           </Route>
 
           {/* Redirect root to dashboard */}

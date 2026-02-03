@@ -10,4 +10,26 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Vendor chunks - separate large dependencies
+          'firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore'],
+          'charts': ['recharts'],
+          'pdf': ['jspdf', 'jspdf-autotable'],
+          'ui': [
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-label',
+            '@radix-ui/react-popover',
+            '@radix-ui/react-select',
+            '@radix-ui/react-slot',
+            '@radix-ui/react-tabs',
+          ],
+        },
+      },
+    },
+    // Increase chunk size warning limit for vendor chunks (optional)
+    chunkSizeWarningLimit: 600,
+  },
 })

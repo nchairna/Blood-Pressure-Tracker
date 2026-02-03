@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { AlertTriangle, BarChart3 } from 'lucide-react'
 import { useBPReadings } from '@/hooks/useBPReadings'
 import { classifyBP, formatDate, formatTime, isSameDay } from '@/lib/bp-utils'
 
@@ -103,7 +104,7 @@ export default function History() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center px-4">
-        <div className="text-[40px] mb-2">⚠️</div>
+        <AlertTriangle className="w-10 h-10 text-[#ff3b30] mb-2" />
         <p className="text-[#ff3b30] font-medium">Gagal memuat data</p>
         <p className="text-[#86868b] text-sm mt-1">Periksa koneksi internet Anda</p>
       </div>
@@ -138,7 +139,7 @@ export default function History() {
       {/* Readings List */}
       {groupedReadings.length === 0 ? (
         <div className="bg-white rounded-2xl p-8 text-center">
-          <div className="text-[40px] mb-2">📊</div>
+          <BarChart3 className="w-10 h-10 text-[#86868b] mx-auto mb-2" />
           <p className="text-[#86868b]">Tidak ada catatan ditemukan</p>
         </div>
       ) : (

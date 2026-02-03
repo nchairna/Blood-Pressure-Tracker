@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { AlertTriangle } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useBPReadings } from '@/hooks/useBPReadings'
 import { calculateBPStats, formatDate } from '@/lib/bp-utils'
@@ -107,7 +108,7 @@ export default function Export() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center px-4">
-        <div className="text-[40px] mb-2">⚠️</div>
+        <AlertTriangle className="w-10 h-10 text-[#ff3b30] mb-2" />
         <p className="text-[#ff3b30] font-medium">Gagal memuat data</p>
         <p className="text-[#86868b] text-sm mt-1">Periksa koneksi internet Anda</p>
       </div>

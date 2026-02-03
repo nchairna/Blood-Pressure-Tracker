@@ -3,10 +3,13 @@ import { useBPReadings } from '@/hooks/useBPReadings'
 import { useStats, useLatestReading } from '@/hooks/useStats'
 import { useGamification } from '@/hooks/useGamification'
 import { classifyBP } from '@/lib/bp-utils'
-import { BPChart } from '@/components/bp/BPChart'
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import { Link } from 'react-router-dom'
+import { AlertTriangle, Flame, Zap, Target } from 'lucide-react'
 import type { DateRangeOption } from '@/types'
+
+// Lazy load chart component (recharts is heavy - ~300KB)
+const BPChart = lazy(() => import('@/components/bp/BPChart').then(module => ({ default: module.BPChart })))
 
 export default function Dashboard() {
   const { user } = useAuth()
@@ -62,8 +65,26 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-[#86868b]">Memuat...</div>
+      <div className="space-y-5 animate-pulse">
+        {/* Greeting Skeleton */}
+        <div>
+          <div className="h-8 bg-gray-200 rounded-lg w-48 mb-2"></div>
+          <div className="h-4 bg-gray-200 rounded w-36"></div>
+        </div>
+
+        {/* Daily Progress Card Skeleton */}
+        <div className="bg-gradient-to-r from-[#007aff] to-[#5856d6] rounded-2xl p-5 h-40"></div>
+
+        {/* Latest Reading Skeleton */}
+        <div className="bg-white rounded-2xl p-5 h-32"></div>
+
+        {/* Stats Grid Skeleton */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-white rounded-2xl p-4 h-24"></div>
+          <div className="bg-white rounded-2xl p-4 h-24"></div>
+          <div className="bg-white rounded-2xl p-4 h-24"></div>
+          <div className="bg-white rounded-2xl p-4 h-24"></div>
+        </div>
       </div>
     )
   }
@@ -71,7 +92,7 @@ export default function Dashboard() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center px-4">
-        <div className="text-[40px] mb-2">⚠️</div>
+        <AlertTriangle className="w-10 h-10 text-[#ff3b30] mb-2" />
         <p className="text-[#ff3b30] font-medium">Gagal memuat data</p>
         <p className="text-[#86868b] text-sm mt-1">Periksa koneksi internet Anda</p>
       </div>
@@ -108,7 +129,7 @@ export default function Dashboard() {
           {gamification.currentStreak >= 3 && (
             <div className="text-right">
               <div className="flex items-center gap-1.5">
-                <span className="text-[24px]">🔥</span>
+                <Flame className="w-6 h-6 text-orange-300" />
                 <span className="text-[28px] font-bold">{gamification.currentStreak}</span>
               </div>
               <p className="text-[12px] opacity-80">hari beruntun</p>
@@ -140,17 +161,17 @@ export default function Dashboard() {
       {/* Streak Info (when streak is 1-2 days or no streak but has best) */}
       {gamification.currentStreak > 0 && gamification.currentStreak < 3 && (
         <div className="bg-[#f5f5f7] rounded-2xl p-4 flex items-center gap-3">
-          <span className="text-[24px]">⚡</span>
+          <Zap className="w-6 h-6 text-[#ff9500]" />
           <div>
             <p className="text-[15px] font-medium text-[#1d1d1f]">{gamification.currentStreak} hari beruntun</p>
-            <p className="text-[13px] text-[#86868b]">3 hari lagi untuk mendapat 🔥</p>
+            <p className="text-[13px] text-[#86868b]">3 hari lagi untuk mendapat streak</p>
           </div>
         </div>
       )}
 
       {gamification.currentStreak === 0 && gamification.bestStreak > 0 && (
         <div className="bg-[#f5f5f7] rounded-2xl p-4 flex items-center gap-3">
-          <span className="text-[24px]">🎯</span>
+          <Target className="w-6 h-6 text-[#007aff]" />
           <div>
             <p className="text-[15px] font-medium text-[#1d1d1f]">Rekor terbaik: {gamification.bestStreak} hari</p>
             <p className="text-[13px] text-[#86868b]">Catat 3x sehari untuk membangun streak</p>
@@ -246,7 +267,13 @@ export default function Dashboard() {
               ))}
             </div>
           </div>
-          <BPChart readings={chartReadings} height={180} />
+          <Suspense fallback={
+            <div className="h-[180px] flex items-center justify-center">
+              <div className="text-[#86868b] text-sm">Memuat grafik...</div>
+            </div>
+          }>
+            <BPChart readings={chartReadings} height={180} />
+          </Suspense>
         </div>
       )}
 
