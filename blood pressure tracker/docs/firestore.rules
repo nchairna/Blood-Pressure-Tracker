@@ -1,0 +1,52 @@
+// Firestore Security Rules for Blood Pressure Tracker
+// Copy this entire file content into Firebase Console > Firestore > Rules
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ============================================
+    // USERS COLLECTION
+    // ============================================
+    // Each user can only read/write their own user document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // ============================================
+    // READINGS COLLECTION
+    // ============================================
+    // Users can only access readings where userId matches their auth UID
+    match /readings/{readingId} {
+
+      // READ: User must be logged in AND own the reading
+      allow read: if request.auth != null
+        && request.auth.uid == resource.data.userId;
+
+      // CREATE: User must be logged in AND set themselves as owner
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.userId
+        // Validate required fields exist
+        && request.resource.data.systolic is number
+        && request.resource.data.diastolic is number
+        && request.resource.data.pulse is number
+        && request.resource.data.timeOfDay in ['morning', 'afternoon', 'evening']
+        && request.resource.data.timestamp is timestamp;
+
+      // UPDATE: User must be logged in AND own the reading
+      // Cannot change the userId field
+      allow update: if request.auth != null
+        && request.auth.uid == resource.data.userId
+        && request.resource.data.userId == resource.data.userId;
+
+      // DELETE: User must be logged in AND own the reading
+      allow delete: if request.auth != null
+        && request.auth.uid == resource.data.userId;
+    }
+
+    // ============================================
+    // DENY ALL OTHER ACCESS
+    // ============================================
+    // Any collection not explicitly defined above is denied
+  }
+}

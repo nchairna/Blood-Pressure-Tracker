@@ -1,0 +1,187 @@
+@import "tailwindcss";
+
+@theme {
+  /* Apple-inspired color palette */
+  --color-background: #ffffff;
+  --color-foreground: #1d1d1f;
+  --color-card: #ffffff;
+  --color-card-foreground: #1d1d1f;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #1d1d1f;
+  --color-primary: #007aff;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #f5f5f7;
+  --color-secondary-foreground: #1d1d1f;
+  --color-muted: #f5f5f7;
+  --color-muted-foreground: #86868b;
+  --color-accent: #f5f5f7;
+  --color-accent-foreground: #1d1d1f;
+  --color-destructive: #ff3b30;
+  --color-destructive-foreground: #ffffff;
+  --color-border: #d2d2d7;
+  --color-input: #e5e5ea;
+  --color-ring: #007aff;
+
+  /* Radius - Apple uses subtle rounding */
+  --radius-lg: 12px;
+  --radius-md: 10px;
+  --radius-sm: 8px;
+
+  /* Apple system font stack */
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+/* Base styles */
+* {
+  border-color: var(--color-border);
+}
+
+html {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background-color: #f5f5f7;
+  color: var(--color-foreground);
+  font-size: 17px;
+  line-height: 1.47059;
+  letter-spacing: -0.022em;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Touch-friendly inputs - prevent iOS zoom */
+input, select, textarea, button {
+  font-size: 17px;
+  font-family: inherit;
+}
+
+/* Apple-style headings */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  letter-spacing: -0.022em;
+}
+
+h1 {
+  font-size: 28px;
+  line-height: 1.14286;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 22px;
+  line-height: 1.27273;
+}
+
+h3 {
+  font-size: 19px;
+  line-height: 1.21053;
+}
+
+/* Safe area insets for mobile */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Bottom navigation safe area */
+.bottom-nav {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px);
+}
+
+/* Animations */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Apple-style card */
+.apple-card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* Apple-style button */
+.apple-button {
+  background: #007aff;
+  color: white;
+  border-radius: 12px;
+  font-weight: 600;
+  padding: 16px 24px;
+  font-size: 17px;
+  transition: all 0.2s ease;
+}
+
+.apple-button:hover {
+  background: #0056b3;
+}
+
+.apple-button:active {
+  transform: scale(0.98);
+}
+
+/* Apple-style input */
+.apple-input {
+  background: #ffffff;
+  border: 1px solid #d2d2d7;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 17px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.apple-input:focus {
+  outline: none;
+  border-color: #007aff;
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
+}
+
+/* Status colors - Apple style */
+.status-normal {
+  background: #34c759;
+  color: white;
+}
+
+.status-elevated {
+  background: #ff9500;
+  color: white;
+}
+
+.status-high1 {
+  background: #ff3b30;
+  color: white;
+}
+
+.status-high2 {
+  background: #af52de;
+  color: white;
+}
