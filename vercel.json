@@ -1,0 +1,8 @@
+{
+  "buildCommand": "cd \"blood pressure tracker\" && npm install && npm run build",
+  "outputDirectory": "blood pressure tracker/dist",
+  "installCommand": "echo 'skipping root install'",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
