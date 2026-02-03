@@ -30,15 +30,26 @@ export function useBPReadings(dateRangeOption: DateRangeOption = 'all') {
     }
 
     setLoading(true)
-    const { start, end } = getDateRange(dateRangeOption)
 
-    const readingsQuery = query(
-      collection(db, 'readings'),
-      where('userId', '==', user.uid),
-      where('timestamp', '>=', Timestamp.fromDate(start)),
-      where('timestamp', '<=', Timestamp.fromDate(end)),
-      orderBy('timestamp', 'desc')
-    )
+    // For 'all', use simpler query without date range (faster, no complex index needed)
+    // For specific ranges, use date filters
+    let readingsQuery
+    if (dateRangeOption === 'all') {
+      readingsQuery = query(
+        collection(db, 'readings'),
+        where('userId', '==', user.uid),
+        orderBy('timestamp', 'desc')
+      )
+    } else {
+      const { start, end } = getDateRange(dateRangeOption)
+      readingsQuery = query(
+        collection(db, 'readings'),
+        where('userId', '==', user.uid),
+        where('timestamp', '>=', Timestamp.fromDate(start)),
+        where('timestamp', '<=', Timestamp.fromDate(end)),
+        orderBy('timestamp', 'desc')
+      )
+    }
 
     const unsubscribe = onSnapshot(
       readingsQuery,
