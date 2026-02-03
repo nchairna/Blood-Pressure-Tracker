@@ -9,7 +9,7 @@ type DateFilter = 'week' | 'month' | 'all' | 'custom'
 
 export default function Export() {
   const { user } = useAuth()
-  const { readings, loading } = useBPReadings('all')
+  const { readings, loading, error } = useBPReadings('all')
   const [dateFilter, setDateFilter] = useState<DateFilter>('month')
   const [customStart, setCustomStart] = useState('')
   const [customEnd, setCustomEnd] = useState('')
@@ -100,6 +100,16 @@ export default function Export() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-[#86868b]">Memuat...</div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center px-4">
+        <div className="text-[40px] mb-2">⚠️</div>
+        <p className="text-[#ff3b30] font-medium">Gagal memuat data</p>
+        <p className="text-[#86868b] text-sm mt-1">Periksa koneksi internet Anda</p>
       </div>
     )
   }

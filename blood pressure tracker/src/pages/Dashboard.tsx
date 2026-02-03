@@ -10,7 +10,7 @@ import type { DateRangeOption } from '@/types'
 
 export default function Dashboard() {
   const { user } = useAuth()
-  const { readings, loading } = useBPReadings('all')
+  const { readings, loading, error } = useBPReadings('all')
   const stats7d = useStats(readings, '7d')
   const latestReading = useLatestReading(readings)
   const gamification = useGamification(readings)
@@ -64,6 +64,16 @@ export default function Dashboard() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-[#86868b]">Memuat...</div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center px-4">
+        <div className="text-[40px] mb-2">⚠️</div>
+        <p className="text-[#ff3b30] font-medium">Gagal memuat data</p>
+        <p className="text-[#86868b] text-sm mt-1">Periksa koneksi internet Anda</p>
       </div>
     )
   }
