@@ -1,132 +1,42 @@
-import { useState, useEffect, useCallback } from 'react'
-import {
-  collection,
-  query,
-  where,
-  orderBy,
-  onSnapshot,
-  addDoc,
-  deleteDoc,
-  doc,
-  serverTimestamp,
-  Timestamp,
-} from 'firebase/firestore'
-import { db } from '@/lib/firebase'
-import { useAuth } from '@/hooks/useAuth'
-import type { BPReading, BPReadingFormData, DateRangeOption } from '@/types'
+import { useMemo } from 'react'
+import { useBPData, type SyncStatus } from '@/contexts/BPDataContext'
+import type { BPReading, DateRangeOption } from '@/types'
 import { getDateRange } from '@/lib/bp-utils'
 
+// Re-export SyncStatus for backward compatibility
+export type { SyncStatus }
+
+/**
+ * Hook to access BP readings with optional date filtering.
+ * All data comes from a single centralized Firestore listener (BPDataProvider).
+ * This prevents multiple listeners and ensures consistent state across components.
+ */
 export function useBPReadings(dateRangeOption: DateRangeOption = 'all') {
-  const { user, loading: authLoading } = useAuth()
-  const [readings, setReadings] = useState<BPReading[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const {
+    readings: allReadings,
+    loading,
+    error,
+    syncStatus,
+    hasSyncedWithServer,
+    isOnline,
+    addReading,
+    deleteReading,
+    refresh,
+  } = useBPData()
 
-  useEffect(() => {
-    // Wait for auth to finish initializing before attempting to fetch data
-    // This prevents race conditions where we try to query Firestore
-    // before knowing if the user is authenticated
-    if (authLoading) {
-      return
-    }
-
-    if (!user) {
-      setReadings([])
-      setLoading(false)
-      setError(null)
-      return
-    }
-
-    setLoading(true)
-    setError(null)
-
-    // For 'all', use simpler query without date range (faster, no complex index needed)
-    // For specific ranges, use date filters
-    let readingsQuery
+  // Filter readings client-side based on date range
+  // This is efficient since we already have all data in memory
+  const readings = useMemo(() => {
     if (dateRangeOption === 'all') {
-      readingsQuery = query(
-        collection(db, 'readings'),
-        where('userId', '==', user.uid),
-        orderBy('timestamp', 'desc')
-      )
-    } else {
-      const { start, end } = getDateRange(dateRangeOption)
-      readingsQuery = query(
-        collection(db, 'readings'),
-        where('userId', '==', user.uid),
-        where('timestamp', '>=', Timestamp.fromDate(start)),
-        where('timestamp', '<=', Timestamp.fromDate(end)),
-        orderBy('timestamp', 'desc')
-      )
+      return allReadings
     }
 
-    const unsubscribe = onSnapshot(
-      readingsQuery,
-      (snapshot) => {
-        try {
-          const readingsData: BPReading[] = snapshot.docs.map((docSnap) => ({
-            id: docSnap.id,
-            ...docSnap.data(),
-          })) as BPReading[]
-          setReadings(readingsData)
-          setLoading(false)
-          setError(null)
-        } catch (err) {
-          console.error('Error processing readings data:', err)
-          setError('Failed to process readings data')
-          setLoading(false)
-        }
-      },
-      (err) => {
-        console.error('Error fetching readings:', err)
-
-        // Provide more specific error messages
-        let errorMessage = 'Failed to load readings'
-        if (err.code === 'permission-denied') {
-          errorMessage = 'Permission denied. Please log in again.'
-        } else if (err.code === 'unavailable') {
-          errorMessage = 'Network error. Please check your connection.'
-        } else if (err.code === 'unauthenticated') {
-          errorMessage = 'Authentication required. Please log in again.'
-        }
-
-        setError(errorMessage)
-        setLoading(false)
-      }
-    )
-
-    return () => {
-      unsubscribe()
-    }
-  }, [user, authLoading, dateRangeOption])
-
-  const addReading = useCallback(
-    async (data: BPReadingFormData) => {
-      if (!user) throw new Error('Must be logged in')
-
-      const readingData = {
-        userId: user.uid,
-        systolic: data.systolic,
-        diastolic: data.diastolic,
-        pulse: data.pulse,
-        timeOfDay: data.timeOfDay,
-        timestamp: Timestamp.fromDate(data.date),
-        notes: data.notes || null,
-        createdAt: serverTimestamp(),
-      }
-
-      await addDoc(collection(db, 'readings'), readingData)
-    },
-    [user]
-  )
-
-  const deleteReading = useCallback(
-    async (id: string) => {
-      if (!user) throw new Error('Must be logged in')
-      await deleteDoc(doc(db, 'readings', id))
-    },
-    [user]
-  )
+    const { start, end } = getDateRange(dateRangeOption)
+    return allReadings.filter((reading) => {
+      const date = reading.timestamp.toDate()
+      return date >= start && date <= end
+    })
+  }, [allReadings, dateRangeOption])
 
   return {
     readings,
@@ -134,66 +44,59 @@ export function useBPReadings(dateRangeOption: DateRangeOption = 'all') {
     error,
     addReading,
     deleteReading,
+    syncStatus,
+    hasSyncedWithServer,
+    isFromCache: syncStatus === 'syncing',
+    isOnline,
+    refresh,
   }
 }
 
+/**
+ * Hook to get today's readings only.
+ * Derives from the centralized data store.
+ */
 export function useTodayReadings() {
-  const { user, loading: authLoading } = useAuth()
-  const [readings, setReadings] = useState<BPReading[]>([])
-  const [loading, setLoading] = useState(true)
+  const {
+    readings: allReadings,
+    loading,
+    syncStatus,
+    hasSyncedWithServer,
+  } = useBPData()
 
-  useEffect(() => {
-    // Wait for auth to initialize
-    if (authLoading) {
-      return
-    }
-
-    if (!user) {
-      setReadings([])
-      setLoading(false)
-      return
-    }
-
+  // Filter to today's readings
+  const readings = useMemo(() => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     const tomorrow = new Date(today)
     tomorrow.setDate(tomorrow.getDate() + 1)
 
-    const readingsQuery = query(
-      collection(db, 'readings'),
-      where('userId', '==', user.uid),
-      where('timestamp', '>=', Timestamp.fromDate(today)),
-      where('timestamp', '<', Timestamp.fromDate(tomorrow)),
-      orderBy('timestamp', 'desc')
-    )
+    return allReadings.filter((reading) => {
+      const date = reading.timestamp.toDate()
+      return date >= today && date < tomorrow
+    })
+  }, [allReadings])
 
-    const unsubscribe = onSnapshot(
-      readingsQuery,
-      (snapshot) => {
-        try {
-          const readingsData: BPReading[] = snapshot.docs.map((docSnap) => ({
-            id: docSnap.id,
-            ...docSnap.data(),
-          })) as BPReading[]
-          setReadings(readingsData)
-          setLoading(false)
-        } catch (err) {
-          console.error('Error processing today readings data:', err)
-          setReadings([])
-          setLoading(false)
-        }
-      },
-      (err) => {
-        console.error('Error fetching today readings:', err)
-        setReadings([])
-        setLoading(false)
-      }
-    )
+  return {
+    readings,
+    loading,
+    syncStatus,
+    hasSyncedWithServer,
+    isFromCache: syncStatus === 'syncing',
+  }
+}
 
-    return () => {
-      unsubscribe()
-    }
-  }, [user, authLoading])
+/**
+ * Hook to get readings for a specific date range.
+ * Useful for charts and exports.
+ */
+export function useReadingsInRange(startDate: Date, endDate: Date): BPReading[] {
+  const { readings: allReadings } = useBPData()
 
-  return { readings, loading }
+  return useMemo(() => {
+    return allReadings.filter((reading) => {
+      const date = reading.timestamp.toDate()
+      return date >= startDate && date <= endDate
+    })
+  }, [allReadings, startDate, endDate])
 }

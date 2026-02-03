@@ -36,7 +36,7 @@ export default function Entry() {
   const [error, setError] = useState('')
 
   const { addReading, deleteReading } = useBPReadings()
-  const { readings: todayReadings, loading: loadingToday } = useTodayReadings()
+  const { readings: todayReadings, loading: loadingToday, syncStatus, hasSyncedWithServer } = useTodayReadings()
 
   const todayCount = todayReadings.length
   const todayProgress = Math.min(100, (todayCount / DAILY_GOAL) * 100)
@@ -263,11 +263,11 @@ export default function Entry() {
           Hari Ini ({todayReadings.length})
         </h2>
 
-        {loadingToday ? (
+        {loadingToday && !hasSyncedWithServer && todayReadings.length === 0 ? (
           <div className="bg-white rounded-2xl p-6 text-center text-[#86868b]">
-            Memuat...
+            {syncStatus === 'syncing' ? 'Menyinkronkan...' : 'Memuat...'}
           </div>
-        ) : todayReadings.length === 0 ? (
+        ) : hasSyncedWithServer && todayReadings.length === 0 ? (
           <div className="bg-white rounded-2xl p-6 text-center">
             <p className="text-[#86868b]">Belum ada catatan hari ini</p>
           </div>

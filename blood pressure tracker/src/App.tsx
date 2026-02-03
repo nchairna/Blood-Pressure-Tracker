@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
 import { AuthProvider } from '@/contexts/AuthContext'
+import { BPDataProvider } from '@/contexts/BPDataContext'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { Layout } from '@/components/layout/Layout'
 import Login from '@/pages/Login'
@@ -76,11 +77,13 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* Protected routes */}
+          {/* Protected routes - wrapped in BPDataProvider for single data source */}
           <Route
             element={
               <ProtectedRoute>
-                <Layout />
+                <BPDataProvider>
+                  <Layout />
+                </BPDataProvider>
               </ProtectedRoute>
             }
           >

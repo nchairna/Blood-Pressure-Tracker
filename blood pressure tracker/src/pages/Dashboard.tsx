@@ -6,6 +6,7 @@ import { classifyBP } from '@/lib/bp-utils'
 import { useState, lazy, Suspense } from 'react'
 import { Link } from 'react-router-dom'
 import { AlertTriangle, Flame, Zap, Target } from 'lucide-react'
+import { SyncIndicator } from '@/components/ui/SyncIndicator'
 import type { DateRangeOption } from '@/types'
 
 // Lazy load chart component (recharts is heavy - ~300KB)
@@ -13,7 +14,7 @@ const BPChart = lazy(() => import('@/components/bp/BPChart').then(module => ({ d
 
 export default function Dashboard() {
   const { user } = useAuth()
-  const { readings, loading, error } = useBPReadings('all')
+  const { readings, loading, error, syncStatus, hasSyncedWithServer, refresh } = useBPReadings('all')
   const stats7d = useStats(readings, '7d')
   const latestReading = useLatestReading(readings)
   const gamification = useGamification(readings)
@@ -63,7 +64,9 @@ export default function Dashboard() {
     }
   })
 
-  if (loading) {
+  // Show loading skeleton only during initial load (before any data arrives)
+  // Once we have cache data, show it with sync indicator instead of skeleton
+  if (loading && !hasSyncedWithServer && readings.length === 0) {
     return (
       <div className="space-y-5 animate-pulse">
         {/* Greeting Skeleton */}
@@ -99,14 +102,18 @@ export default function Dashboard() {
     )
   }
 
-  // Empty state for new users
-  if (!loading && readings.length === 0) {
+  // Empty state for new users - only show when we've confirmed from server there's no data
+  // This prevents showing empty state while syncing on a new device
+  if (hasSyncedWithServer && readings.length === 0) {
     return (
       <div className="space-y-5">
         {/* Greeting */}
-        <div>
-          <h1 className="text-[28px] font-bold text-[#1d1d1f]">Halo, {displayName}</h1>
-          <p className="text-[#86868b] mt-0.5">Selamat datang di pelacak tekanan darah Anda</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-[28px] font-bold text-[#1d1d1f]">Halo, {displayName}</h1>
+            <p className="text-[#86868b] mt-0.5">Selamat datang di pelacak tekanan darah Anda</p>
+          </div>
+          <SyncIndicator status={syncStatus} onRefresh={refresh} />
         </div>
 
         {/* Welcome Card */}
@@ -196,9 +203,12 @@ export default function Dashboard() {
   return (
     <div className="space-y-5">
       {/* Greeting */}
-      <div>
-        <h1 className="text-[28px] font-bold text-[#1d1d1f]">Halo, {displayName}</h1>
-        <p className="text-[#86868b] mt-0.5">Ringkasan kesehatan Anda</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-[28px] font-bold text-[#1d1d1f]">Halo, {displayName}</h1>
+          <p className="text-[#86868b] mt-0.5">Ringkasan kesehatan Anda</p>
+        </div>
+        <SyncIndicator status={syncStatus} onRefresh={refresh} />
       </div>
 
       {/* Daily Progress Card */}

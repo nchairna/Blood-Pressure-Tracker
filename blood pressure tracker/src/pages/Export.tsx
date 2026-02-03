@@ -5,12 +5,13 @@ import { useBPReadings } from '@/hooks/useBPReadings'
 import { calculateBPStats, formatDate } from '@/lib/bp-utils'
 import { generatePDF } from '@/components/export/ExportPDF'
 import { generateCSV } from '@/components/export/ExportCSV'
+import { SyncIndicator } from '@/components/ui/SyncIndicator'
 
 type DateFilter = 'week' | 'month' | 'all' | 'custom'
 
 export default function Export() {
   const { user } = useAuth()
-  const { readings, loading, error } = useBPReadings('all')
+  const { readings, loading, error, syncStatus, hasSyncedWithServer, refresh } = useBPReadings('all')
   const [dateFilter, setDateFilter] = useState<DateFilter>('month')
   const [customStart, setCustomStart] = useState('')
   const [customEnd, setCustomEnd] = useState('')
@@ -97,7 +98,8 @@ export default function Export() {
     { value: 'custom', label: 'Kustom' },
   ]
 
-  if (loading) {
+  // Show loading only during initial load before any data
+  if (loading && !hasSyncedWithServer && readings.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-[#86868b]">Memuat...</div>
@@ -115,13 +117,16 @@ export default function Export() {
     )
   }
 
-  // Empty state for new users with no readings at all
-  if (!loading && readings.length === 0) {
+  // Empty state - only show when server confirmed no data
+  if (hasSyncedWithServer && readings.length === 0) {
     return (
       <div className="space-y-5">
-        <div>
-          <h1 className="text-[28px] font-bold text-[#1d1d1f]">Ekspor</h1>
-          <p className="text-[#86868b] mt-1">Unduh data tekanan darah Anda</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-[28px] font-bold text-[#1d1d1f]">Ekspor</h1>
+            <p className="text-[#86868b] mt-1">Unduh data tekanan darah Anda</p>
+          </div>
+          <SyncIndicator status={syncStatus} onRefresh={refresh} />
         </div>
 
         <div className="bg-white rounded-2xl p-12 text-center">
@@ -146,9 +151,12 @@ export default function Export() {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div>
-        <h1 className="text-[28px] font-bold text-[#1d1d1f]">Ekspor</h1>
-        <p className="text-[#86868b] mt-1">Unduh data tekanan darah Anda</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-[28px] font-bold text-[#1d1d1f]">Ekspor</h1>
+          <p className="text-[#86868b] mt-1">Unduh data tekanan darah Anda</p>
+        </div>
+        <SyncIndicator status={syncStatus} onRefresh={refresh} />
       </div>
 
       {/* Date Filter - Blue selected */}

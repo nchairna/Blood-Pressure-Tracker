@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { AlertTriangle, BarChart3 } from 'lucide-react'
 import { useBPReadings } from '@/hooks/useBPReadings'
 import { classifyBP, formatDate, formatTime, isSameDay } from '@/lib/bp-utils'
+import { SyncIndicator } from '@/components/ui/SyncIndicator'
 
 type DateFilter = 'today' | 'week' | 'month' | 'all'
 
@@ -16,7 +17,7 @@ const getStatusLabelID = (status: string) => {
 }
 
 export default function History() {
-  const { readings, loading, error, deleteReading } = useBPReadings('all')
+  const { readings, loading, error, deleteReading, syncStatus, hasSyncedWithServer, refresh } = useBPReadings('all')
   const [deleting, setDeleting] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState<string | null>(null)
   const [dateFilter, setDateFilter] = useState<DateFilter>('today')
@@ -93,7 +94,8 @@ export default function History() {
     { value: 'all', label: 'Semua' },
   ]
 
-  if (loading) {
+  // Show loading only during initial load before any data
+  if (loading && !hasSyncedWithServer && readings.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-[#86868b]">Memuat...</div>
@@ -111,13 +113,16 @@ export default function History() {
     )
   }
 
-  // Empty state for new users with no readings at all
-  if (!loading && readings.length === 0) {
+  // Empty state for new users - only show when server confirmed no data
+  if (hasSyncedWithServer && readings.length === 0) {
     return (
       <div className="space-y-5">
-        <div>
-          <h1 className="text-[28px] font-bold text-[#1d1d1f]">Riwayat</h1>
-          <p className="text-[#86868b] mt-1">0 catatan</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-[28px] font-bold text-[#1d1d1f]">Riwayat</h1>
+            <p className="text-[#86868b] mt-1">0 catatan</p>
+          </div>
+          <SyncIndicator status={syncStatus} onRefresh={refresh} />
         </div>
 
         <div className="bg-white rounded-2xl p-12 text-center">
@@ -140,9 +145,12 @@ export default function History() {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div>
-        <h1 className="text-[28px] font-bold text-[#1d1d1f]">Riwayat</h1>
-        <p className="text-[#86868b] mt-1">{filteredReadings.length} catatan</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-[28px] font-bold text-[#1d1d1f]">Riwayat</h1>
+          <p className="text-[#86868b] mt-1">{filteredReadings.length} catatan</p>
+        </div>
+        <SyncIndicator status={syncStatus} onRefresh={refresh} />
       </div>
 
       {/* Filter Pills - Blue selected */}
