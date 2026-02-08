@@ -1,27 +1,31 @@
 # Blood Pressure Tracker
 
-A mobile-first web application for tracking blood pressure readings. Designed for simplicity and ease of use.
+A modern, mobile-first blood pressure tracking application built with React and Firebase. Track your health with real-time cloud sync across all your devices.
 
 ## Features
 
-- **Easy BP Entry**: Quick entry form for systolic, diastolic, and pulse readings
-- **Dashboard**: View your latest readings, 7-day and 30-day averages, and trend charts
-- **History**: Browse all your readings with date and time-of-day filters
-- **Export**: Download your data as PDF reports or CSV spreadsheets
-- **Authentication**: Secure login with email/password
+- **Quick BP Entry** - Log systolic, diastolic, and pulse with a clean, intuitive form
+- **Real-time Cloud Sync** - Data syncs instantly across all devices via Firebase
+- **Offline Support** - Works without internet, automatically syncs when back online
+- **Multi-tab Support** - Use in multiple browser tabs simultaneously
+- **Daily Goals** - Track progress toward your daily measurement targets
+- **Dashboard Analytics** - View 7-day and 30-day averages with trend charts
+- **History & Filters** - Browse readings by date range and time of day
+- **Export Options** - Download data as PDF reports or CSV spreadsheets
+- **Secure Authentication** - Email/password auth with Firebase
 
 ## Tech Stack
 
-- React 18 + Vite + TypeScript
-- Tailwind CSS v4
-- Firebase (Firestore + Auth)
-- Recharts for data visualization
-- jsPDF for PDF export
-- Papa Parse for CSV export
+- **Frontend**: React 19, TypeScript, Vite 7
+- **Styling**: Tailwind CSS 4
+- **Backend**: Firebase (Firestore, Authentication)
+- **Charts**: Recharts
+- **Export**: jsPDF, Papa Parse
+- **Hosting**: Vercel
 
-## Setup
+## Quick Start
 
-### 1. Clone and Install
+### 1. Install Dependencies
 
 ```bash
 npm install
@@ -29,21 +33,18 @@ npm install
 
 ### 2. Firebase Setup
 
-1. Go to [Firebase Console](https://console.firebase.google.com/)
-2. Create a new project
-3. Enable **Authentication** with Email/Password provider
-4. Enable **Firestore Database**
-5. Get your Firebase config from Project Settings > General > Your apps
+1. Create a project at [Firebase Console](https://console.firebase.google.com/)
+2. Enable **Authentication** (Email/Password)
+3. Enable **Firestore Database**
+4. Get your config from Project Settings
 
 ### 3. Environment Variables
-
-Copy the example env file and fill in your Firebase credentials:
 
 ```bash
 cp .env.local.example .env.local
 ```
 
-Edit `.env.local` with your Firebase config:
+Add your Firebase credentials to `.env.local`:
 
 ```
 VITE_FIREBASE_API_KEY=your-api-key
@@ -54,25 +55,12 @@ VITE_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
 VITE_FIREBASE_APP_ID=your-app-id
 ```
 
-### 4. Firestore Security Rules
+### 4. Deploy Firestore Rules
 
-In Firebase Console > Firestore > Rules, set up these security rules:
-
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-    match /readings/{readingId} {
-      allow read, write: if request.auth != null
-        && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null
-        && request.auth.uid == request.resource.data.userId;
-    }
-  }
-}
+```bash
+npm install -g firebase-tools
+firebase login
+firebase deploy --only firestore --project your-project-id
 ```
 
 ### 5. Run Development Server
@@ -81,34 +69,33 @@ service cloud.firestore {
 npm run dev
 ```
 
-### 6. Build for Production
-
-```bash
-npm run build
-```
-
 ## Deployment
 
-### Vercel
+### Vercel (Recommended)
 
-```bash
-npm install -g vercel
-vercel
+1. Push to GitHub
+2. Import project in [Vercel](https://vercel.com)
+3. Add environment variables in Vercel dashboard
+4. Deploy
+
+**Important**: Add all `VITE_FIREBASE_*` environment variables in Vercel's project settings.
+
+## Project Structure
+
 ```
-
-### Netlify
-
-```bash
-npm install -g netlify-cli
-netlify deploy --prod
+src/
+├── components/     # Reusable UI components
+├── contexts/       # Auth and BP Data contexts
+├── hooks/          # Custom React hooks
+├── lib/            # Firebase config and utilities
+├── pages/          # Page components (Entry, Dashboard, History, Export)
+└── types/          # TypeScript definitions
 ```
-
-Remember to set your environment variables in your deployment platform.
 
 ## Blood Pressure Categories
 
-| Category | Systolic (mmHg) | Diastolic (mmHg) |
-|----------|-----------------|------------------|
+| Category | Systolic | Diastolic |
+|----------|----------|-----------|
 | Normal | < 120 | < 80 |
 | Elevated | 120-129 | < 80 |
 | High Stage 1 | 130-139 | 80-89 |
